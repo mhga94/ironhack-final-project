@@ -6,7 +6,11 @@ ALTER TABLE grain_dash.container_long DROP CONSTRAINT country_id1;
 ALTER TABLE grain_dash.wheat_production DROP CONSTRAINT country_id;
 ALTER TABLE grain_dash.wheat_yield DROP CONSTRAINT country_id2;
 ALTER TABLE grain_dash.wto_status DROP CONSTRAINT country_id3;
+ALTER TABLE grain_dash.doing_business DROP CONSTRAINT country_id6;
 
+SELECT * FROM grain_dash.country;
+
+--- CLIMATE
 
 SELECT c.country_id, c.country_name FROM grain_dash.country AS c
 JOIN grain_dash.climate AS clim
@@ -48,5 +52,223 @@ ON con.country = temp.country_name
 SET con.country_id = temp.country_id;
 
 --- DOING BUSINESS
-SELECT * FROM grain_dash.doing_business
+SELECT * FROM grain_dash.doing_business;
 
+UPDATE grain_dash.doing_business
+SET country = "Cote d'Ivoire"
+WHERE business_id = 41;
+
+UPDATE grain_dash.doing_business
+SET country = "Czechia"
+WHERE business_id = 44;
+
+UPDATE grain_dash.doing_business
+SET country = "Sao Tome and Principe"
+WHERE business_id = 144;
+
+UPDATE grain_dash.doing_business
+SET country = "Viet Nam"
+WHERE business_id = 186;
+
+UPDATE grain_dash.doing_business
+SET country = "Turkiye"
+WHERE business_id = 176;
+
+UPDATE grain_dash.doing_business AS db 
+JOIN (
+SELECT c.country_name, c.country_id 
+FROM grain_dash.country AS c     
+JOIN grain_dash.doing_business AS db_inner     
+ON c.country_name = db_inner.country 
+) AS temp 
+ON db.country = temp.country_name 
+SET db.country_id = temp.country_id;
+
+--- WHEAT PRODUCTION
+SELECT * FROM grain_dash.wheat_production;
+
+UPDATE grain_dash.wheat_production AS wp
+JOIN (
+SELECT c.country_name, c.country_id 
+FROM grain_dash.country AS c     
+JOIN grain_dash.wheat_production AS wp_inner     
+ON c.country_name = wp_inner.country 
+) AS temp 
+ON wp.country = temp.country_name 
+SET wp.country_id = temp.country_id;
+
+-- Update country_id values
+UPDATE grain_dash.wheat_production
+SET country_id = CASE
+	WHEN country = 'Bolivia (Plurinational State of)' THEN "30"
+	WHEN country = 'China, mainland' THEN "42"
+	WHEN country = 'China, Taiwan Province of' THEN "0"
+	WHEN country = 'Czechoslovakia' THEN "56"
+	WHEN country = 'Democratic People\'s Republic of Korea' THEN "193"
+	WHEN country = 'Democratic Republic of the Congo' THEN "45"
+	WHEN country = 'Egypt' THEN "69"
+	WHEN country = 'Ethiopia PDR' THEN "74"
+	WHEN country = 'Iran (Islamic Republic of)' THEN "114"
+	WHEN country = 'Kyrgyzstan' THEN "124"
+	WHEN country = 'Netherlands (Kingdom of the)' THEN "176"
+	WHEN country = 'Palestine' THEN "0"
+	WHEN country = 'Republic of Korea' THEN "128"
+	WHEN country = 'Republic of Moldova' THEN "151"
+	WHEN country = 'Serbia and Montenegro' THEN "0"
+    WHEN country = 'Slovakia' THEN "221"
+	WHEN country = 'Sudan (former)' THEN "206"
+	WHEN country = 'TÃ¼rkiye' THEN "242"
+	WHEN country = 'United Republic of Tanzania' THEN "244"
+	WHEN country = 'United States of America' THEN "249"
+	WHEN country = 'Venezuela (Bolivarian Republic of)' THEN" 252"
+	WHEN country = 'Yemen' THEN "260"
+    ELSE country_id 
+END;
+
+-- Update country names
+UPDATE grain_dash.wheat_production
+SET country = CASE
+	WHEN country = 'Bolivia (Plurinational State of)' THEN "Bolivia"
+	WHEN country = 'China, mainland' THEN "China"
+	WHEN country = 'China, Taiwan Province of' THEN "Taiwan"
+	WHEN country = 'Czechoslovakia' THEN "Czechia"
+	WHEN country = 'Democratic People\'s Republic of Korea' THEN "Korea, Dem. People's Rep."
+	WHEN country = 'Democratic Republic of the Congo' THEN "Congo, Dem. Rep."
+	WHEN country = 'Egypt' THEN "Egypt, Arab Rep."
+	WHEN country = 'Ethiopia PDR' THEN "Ethiopia"
+	WHEN country = 'Iran (Islamic Republic of)' THEN "Iran, Islamic Rep."
+	WHEN country = 'Kyrgyzstan' THEN "Kyrgyz Republic"
+	WHEN country = 'Netherlands (Kingdom of the)' THEN "Netherlands"
+	WHEN country = 'Palestine' THEN "Palestine"
+	WHEN country = 'Republic of Korea' THEN "Korea, Rep."
+	WHEN country = 'Republic of Moldova' THEN "Moldova"
+	WHEN country = 'Serbia and Montenegro' THEN "Serbia and Montenegro"
+	WHEN country = 'Slovakia' THEN "Slovak Republic"
+	WHEN country = 'Sudan (former)' THEN "Sudan"
+	WHEN country = 'TÃ¼rkiye' THEN "Turkiye"
+	WHEN country = 'United Republic of Tanzania' THEN "Tanzania"
+	WHEN country = 'United States of America' THEN "United States"
+	WHEN country = 'Venezuela (Bolivarian Republic of)' THEN" Venezuela, RB"
+	WHEN country = 'Yemen' THEN "Yemen, Rep."
+    ELSE country 
+END;
+
+SELECT country, ROUND(AVG(value),2) AS average_value
+FROM grain_dash.wheat_production
+WHERE year > 2014
+GROUP BY country
+ORDER BY average_value DESC
+LIMIT 10;
+
+
+
+--- WHEAT YIELD
+SELECT DISTINCT country FROM grain_dash.wheat_yield
+WHERE country_id = 0;
+
+UPDATE grain_dash.wheat_yield AS wy
+JOIN (
+SELECT c.country_name, c.country_id 
+FROM grain_dash.country AS c     
+JOIN grain_dash.wheat_yield AS wy_inner     
+ON c.country_name = wy_inner.country 
+) AS temp 
+ON wy.country = temp.country_name 
+SET wy.country_id = temp.country_id;
+
+-- Update country_id values
+UPDATE grain_dash.wheat_yield
+SET country_id = CASE
+	WHEN country = 'Bolivia (Plurinational State of)' THEN "30"
+	WHEN country = 'China, mainland' THEN "42"
+	WHEN country = 'China, Taiwan Province of' THEN "0"
+	WHEN country = 'Czechoslovakia' THEN "56"
+	WHEN country = 'Democratic People\'s Republic of Korea' THEN "193"
+	WHEN country = 'Democratic Republic of the Congo' THEN "45"
+	WHEN country = 'Egypt' THEN "69"
+	WHEN country = 'Ethiopia PDR' THEN "74"
+	WHEN country = 'Iran (Islamic Republic of)' THEN "114"
+	WHEN country = 'Kyrgyzstan' THEN "124"
+	WHEN country = 'Netherlands (Kingdom of the)' THEN "176"
+	WHEN country = 'Palestine' THEN "0"
+	WHEN country = 'Republic of Korea' THEN "128"
+	WHEN country = 'Republic of Moldova' THEN "151"
+	WHEN country = 'Serbia and Montenegro' THEN "0"
+    WHEN country = 'Slovakia' THEN "221"
+	WHEN country = 'Sudan (former)' THEN "206"
+	WHEN country = 'TÃ¼rkiye' THEN "242"
+	WHEN country = 'United Republic of Tanzania' THEN "244"
+	WHEN country = 'United States of America' THEN "249"
+	WHEN country = 'Venezuela (Bolivarian Republic of)' THEN" 252"
+	WHEN country = 'Yemen' THEN "260"
+    ELSE country_id 
+END;
+
+-- Update country names
+UPDATE grain_dash.wheat_yield
+SET country = CASE
+	WHEN country = 'Bolivia (Plurinational State of)' THEN "Bolivia"
+	WHEN country = 'China, mainland' THEN "China"
+	WHEN country = 'China, Taiwan Province of' THEN "Taiwan"
+	WHEN country = 'Czechoslovakia' THEN "Czechia"
+	WHEN country = 'Democratic People\'s Republic of Korea' THEN "Korea, Dem. People's Rep."
+	WHEN country = 'Democratic Republic of the Congo' THEN "Congo, Dem. Rep."
+	WHEN country = 'Egypt' THEN "Egypt, Arab Rep."
+	WHEN country = 'Ethiopia PDR' THEN "Ethiopia"
+	WHEN country = 'Iran (Islamic Republic of)' THEN "Iran, Islamic Rep."
+	WHEN country = 'Kyrgyzstan' THEN "Kyrgyz Republic"
+	WHEN country = 'Netherlands (Kingdom of the)' THEN "Netherlands"
+	WHEN country = 'Palestine' THEN "Palestine"
+	WHEN country = 'Republic of Korea' THEN "Korea, Rep."
+	WHEN country = 'Republic of Moldova' THEN "Moldova"
+	WHEN country = 'Serbia and Montenegro' THEN "Serbia and Montenegro"
+	WHEN country = 'Slovakia' THEN "Slovak Republic"
+	WHEN country = 'Sudan (former)' THEN "Sudan"
+	WHEN country = 'TÃ¼rkiye' THEN "Turkiye"
+	WHEN country = 'United Republic of Tanzania' THEN "Tanzania"
+	WHEN country = 'United States of America' THEN "United States"
+	WHEN country = 'Venezuela (Bolivarian Republic of)' THEN" Venezuela, RB"
+	WHEN country = 'Yemen' THEN "Yemen, Rep."
+    ELSE country 
+END;
+
+--- WTO STATUS
+SELECT * FROM grain_dash.wto_status;
+
+UPDATE grain_dash.wto_status
+SET country = "Sao Tome and Principe"
+WHERE WTO_id = 181;
+
+UPDATE grain_dash.wto_status
+SET country = "Curaçao"
+WHERE WTO_id = 173;
+
+UPDATE grain_dash.wto_status
+SET country = "Syrian Arab Republic"
+WHERE WTO_id = 186;
+
+UPDATE grain_dash.wto_status
+SET country = "Iran, Islamic Rep."
+WHERE WTO_id = 177;
+
+UPDATE grain_dash.wto_status
+SET country = "Bahamas, The"
+WHERE WTO_id = 168;
+
+UPDATE grain_dash.wto_status
+SET country = "Czechia"
+WHERE WTO_id = 38;
+
+UPDATE grain_dash.wto_status
+SET country = "Brunei Darussalam"
+WHERE WTO_id = 18;
+
+UPDATE grain_dash.wto_status AS wto
+JOIN (
+SELECT c.country_name, c.country_id 
+FROM grain_dash.country AS c     
+JOIN grain_dash.wto_status AS wto_inner     
+ON c.country_name = wto_inner.country 
+) AS temp 
+ON wto.country = temp.country_name 
+SET wto.country_id = temp.country_id;
