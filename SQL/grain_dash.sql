@@ -272,3 +272,60 @@ ON c.country_name = wto_inner.country
 ) AS temp 
 ON wto.country = temp.country_name 
 SET wto.country_id = temp.country_id;
+
+-- WHEAT EXPORT
+SELECT * FROM grain_dash.wheat_export
+WHERE country_id = 0;
+
+UPDATE grain_dash.wheat_export
+SET country = CASE
+	WHEN country = 'Bahamas' THEN "Bahamas, The"
+    WHEN country = 'Bolivia (Plurinational State of)' THEN "Bolivia"
+	WHEN country = 'China, mainland' THEN "China"
+	WHEN country = 'China, Taiwan Province of' THEN "Taiwan"
+    WHEN country = 'China, Hong Kong SAR' THEN "Hong Kong SAR, China"
+    WHEN country = 'China, Macao SAR' THEN "Macao SAR, China"
+    WHEN country = "CÃ´te d\'Ivoire" THEN "Cote d'Ivoire"
+	WHEN country = 'Czechoslovakia' THEN "Czechia"
+	WHEN country = 'Congo' THEN "Congo, Rep."
+    WHEN country = 'Congo Rep.' THEN "Congo, Rep."
+    WHEN country = 'Democratic People\'s Republic of Korea' THEN "Korea, Dem. People's Rep."
+	WHEN country = 'Democratic Republic of the Congo' THEN "Congo, Dem. Rep."
+	WHEN country = 'Egypt' THEN "Egypt, Arab Rep."
+	WHEN country = 'Ethiopia PDR' THEN "Ethiopia"
+    WHEN country = 'Gambia' THEN "Gambia, The"
+	WHEN country = 'Iran (Islamic Republic of)' THEN "Iran, Islamic Rep."
+	WHEN country = 'Kyrgyzstan' THEN "Kyrgyz Republic"
+    WHEN country = "Lao People's Democratic Republic" THEN "Lao PDR"
+    WHEN country = 'Micronesia' THEN "Micronesia Fed. Sts."
+	WHEN country = 'Micronesia (Federated States of)' THEN "Micronesia, Fed. Sts."
+    WHEN country = 'Micronesia Fed. Sts.' THEN "Micronesia, Fed. Sts."
+    WHEN country = 'Netherlands (Kingdom of the)' THEN "Netherlands"
+	WHEN country = 'Palestine' THEN "Palestine"
+	WHEN country = 'Republic of Korea' THEN "Korea, Rep."
+	WHEN country = 'Republic of Moldova' THEN "Moldova"
+	WHEN country = 'Serbia and Montenegro' THEN "Serbia and Montenegro"
+	WHEN country = 'Slovakia' THEN "Slovak Republic"
+    WHEN country = 'Saint Kitts and Nevis' THEN "St. Kitts and Nevis"
+    WHEN country = 'Saint Lucia' THEN "St. Lucia"
+    WHEN country = 'Saint Vincent and the Grenadines' THEN "St. Vincent and the Grenadines"
+	WHEN country = 'Sudan (former)' THEN "Sudan"
+	WHEN country = 'TÃ¼rkiye' THEN "Turkiye"
+	WHEN country = 'United Republic of Tanzania' THEN "Tanzania"
+	WHEN country = 'United States of America' THEN "United States"
+	WHEN country = 'Venezuela (Bolivarian Republic of)' THEN "Venezuela, RB"
+    WHEN country = ' Venezuela, RB' THEN 'Venezuela, RB'
+	WHEN country = 'Yemen' THEN "Yemen, Rep."
+    ELSE country 
+END;
+
+UPDATE grain_dash.wheat_export AS we
+JOIN (
+SELECT c.country_name, c.country_id 
+FROM grain_dash.country AS c     
+JOIN grain_dash.wheat_export AS we_inner     
+ON c.country_name = we_inner.country 
+) AS temp 
+ON we.country = temp.country_name 
+SET we.country_id = temp.country_id;
+
