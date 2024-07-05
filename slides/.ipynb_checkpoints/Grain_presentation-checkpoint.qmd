@@ -1,0 +1,339 @@
+---
+title: "Grain dashboard with SQL & Quarto"
+author: "Matt Asquith"
+format: 
+    revealjs:
+        incremental: true
+        theme: serif
+        footer: "Market analysis"
+        slide-number: true
+        show-slide-number: print
+jupyter: ironhack_final_env
+---
+
+```{python}
+import plotly.express as px
+import matplotlib.pyplot as plt
+import pandas as pd 
+import numpy as np 
+
+# for price API
+from urllib.request import urlopen
+import certifi
+import json
+
+# Shiny
+from shiny import App, ui, render
+import shinywidgets
+import mpld3
+
+# Image scraping
+import requests
+from PIL import Image 
+from io import BytesIO
+
+# SQL
+import pymysql
+from sqlalchemy import create_engine
+import getpass
+from sqlalchemy import text
+
+# Tables
+from tabulate import tabulate
+
+# Create SQL engine and load top 10 grain producers for last 10 years
+bd = "grain_dash"
+connection_string = 'mysql+pymysql://root:' + password + '@localhost/'+bd
+engine = create_engine(connection_string)
+engine
+
+with engine.connect() as connection:
+    query = text('SELECT country AS Country, ROUND(AVG(value),2) AS Average_wheat_produced FROM grain_dash.wheat_production WHERE year > 2014 GROUP BY country ORDER BY Average_wheat_produced DESC LIMIT 200')
+    result = connection.execute(query)
+    top10_df = pd.DataFrame(result.all())
+
+top10 = list(top10_df['Country'])
+```
+
+# What and why
+
+## Situation
+:::: {.columns}
+
+::: {.column width="60%"}
+**Company A** is looking to set up a grain production and export operation. 
+
+To conduct preliminary analysis, it has commissioned a team of DAs to draw together some key indicators regarding the top wheat producing countries, including but not limited to: 
+:::
+
+::: {.column width="40%"}
+
+- Business environment
+- Wheat yield 
+- WTO membership  
+- Exposure to climate risk
+:::
+
+::::
+
+
+## Factors considered
+
+::: {.panel-tabset}
+
+### Global wheat production
+
+```{python}
+#| output-location: slide
+
+with engine.connect() as connection:
+    query = text('SELECT country AS Country, ROUND(AVG(value),2) AS Average_wheat_produced FROM grain_dash.wheat_production WHERE year > 2014 GROUP BY country ORDER BY Average_wheat_produced DESC LIMIT 10')
+    result = connection.execute(query)
+    top10_df = pd.DataFrame(result.all())
+
+top10 = list(top10_df['Country'])
+
+with engine.connect() as connection:
+    query = text('SELECT country AS Country, ROUND(AVG(value*1000),2) AS Average_wheat_exported FROM grain_dash.wheat_export WHERE year > 2014 GROUP BY country ORDER BY FIELD(country, "China", "India", "Russian Federation", "United States", "France", "Canada", "Ukraine", "Pakistan", "Australia", "Germany")')
+    result = connection.execute(query)
+    export_df = pd.DataFrame(result.all())
+
+export_df = export_df.tail(10).reset_index(drop=True)
+
+balance_df = top10_df.merge(export_df, on='Country', how='inner')
+
+balance_df['Average_wheat_exported'] = balance_df['Average_wheat_exported'].astype('float64')
+
+
+
+fig2 = px.bar(balance_df, x = 'Country', y = ['Average_wheat_produced','Average_wheat_exported'], color = 'Country', text_auto=".2s", barmode="overlay")
+
+# fig2 = fig2.update_layout(showlegend=False)
+
+fig2 = fig2.update_layout(legend=dict(
+        orientation="v",
+        yanchor="bottom",
+        y=0,
+        xanchor="right",
+        x=10,
+        title_font_family="Courier",
+            font=dict(
+                family="Courier",
+                size=12,
+                color="black"
+            ),
+    ))
+
+fig2.update_traces(textposition=['outside','inside'])
+
+fig2.update_layout(yaxis_title='')
+fig2.update_layout(xaxis_title='')
+fig2.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+
+fig2.update_layout(yaxis_range=[0,160000000])
+fig2.show(renderer= "notebook")
+
+```
+
+### Climate risk ranking
+
+```{python}
+# Climate risk data
+with engine.connect() as connection:
+    query = text('SELECT * FROM climate')
+    result = connection.execute(query)
+    climate_df = pd.DataFrame(result.all())
+climate_df = climate_df.sort_values(by='index_rank', ascending = False)
+fig2 = px.bar(climate_df, x = 'country', y = 'index_rank', color = 'country', text_auto=".2s")
+fig2.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+fig2.update_layout(yaxis_title='')
+fig2.update_layout(xaxis_title='')
+fig2.show(renderer= "notebook")
+
+```
+
+:::
+
+# How
+
+## Factors continued
+
+::: {.panel-tabset}
+
+### Container traffic 
+
+```{python}
+# Container data
+with engine.connect() as connection:
+    query = text('SELECT country AS Country, ROUND(AVG(value),-3) AS Average_container_traffic FROM grain_dash.container WHERE year > 2014 GROUP BY country ORDER BY Average_container_traffic DESC LIMIT 200')
+    result = connection.execute(query)
+    container_df = pd.DataFrame(result.all())
+
+container_df = container_df.sort_values(by='Average_container_traffic', ascending = False)
+fig3 = px.bar(container_df, x = 'Country', y = 'Average_container_traffic', color = 'Country', text_auto=".2s")
+fig3.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+fig3.update_layout(yaxis_title='')
+fig3.update_layout(xaxis_title='')
+fig3.show(renderer= "notebook")
+```
+
+### Wheat yield 
+
+```{python}
+with engine.connect() as connection:
+    query = text('SELECT country AS Country, ROUND(AVG(value),-3) AS Average_yield FROM grain_dash.wheat_yield WHERE year > 2014 GROUP BY country ORDER BY Average_yield DESC LIMIT 100')
+    result = connection.execute(query)
+    yield_df = pd.DataFrame(result.all())
+
+fig4 = px.bar(yield_df, x = 'Country', y = 'Average_yield', color = 'Country', text_auto=".2s")
+fig4.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+fig4.update_layout(yaxis_title='g/hectare')
+fig4.update_layout(xaxis_title='')
+fig4.show(renderer= "notebook")
+
+```
+
+:::
+
+## Factors continued
+
+::: {.panel-tabset}
+
+### Ease of doing business
+
+```{python}
+# Doing Business data
+with engine.connect() as connection:
+    query = text('SELECT country, db_rank FROM doing_business')
+    result = connection.execute(query)
+    db_df = pd.DataFrame(result.all())
+
+db_df = db_df.sort_values(by='db_rank', ascending = True)
+
+fig4 = px.bar(db_df, x = 'country', y = 'db_rank', color = 'country', text_auto=".2s")
+fig4.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
+fig4.update_layout(yaxis_title='rank (2020)')
+fig4.update_layout(xaxis_title='')
+fig4.show(renderer= "notebook")
+```
+
+### WTO member status
+
+```{python}
+# WTO data
+with engine.connect() as connection:
+    query = text('SELECT * FROM wto_status')
+    result = connection.execute(query)
+    wto_df = pd.DataFrame(result.all())
+
+
+table = wto_df.drop(columns=["WTO_id","country_id"])
+print(tabulate(table, headers= ['Country','Status','Accession']))
+```
+
+:::
+
+## Analysis
+
+- Wheat production (1-10)
+- Climate risk ranking (1-135)
+- Container traffic (1-5 - ignored if no exports (e.g. China))
+- Wheat yield/hectare (1-7)
+- Ease of doing business (1-193)
+- WTO member (0: member or 5: not member)
+
+## Score breakdown
+
+```{python}
+# Set countries/pages
+p1 = top10[0]
+p2 = top10[1]
+p3 = top10[2]
+p4 = top10[3]
+p5 = top10[4]
+p6 = top10[5]
+p7 = top10[6]
+p8 = top10[7]
+p9 = top10[8]
+p10 = top10[9]
+
+p_list = [p1,p2,p3,p4,p5,p6,p7,p8,p9,p10]
+
+wheat_scores = [((top10.index(f'{p}')+1)/2) for p in p_list]
+
+climate_scores = [(int(climate_df['index_rank'][climate_df['country']== p].iloc[0])/20) for p in p_list]
+
+container_totals = [int(container_df['Average_container_traffic'][container_df['Country'] == p].iloc[0])/1000 for p in p_list]
+
+container_totals
+
+# Define the range
+min_value = 830
+max_value = 232000
+
+# Create 5 equal bins
+num_bins = 5
+bin_labels = range(num_bins, 0, -1)  # Reverse the bin labels
+
+# Generate bin edges
+bin_edges = pd.cut([min_value, max_value], bins=num_bins, retbins=True)[1]
+
+# Assign bin labels to values
+values = container_totals
+assigned_bins = pd.cut(values, bins=bin_edges, labels=bin_labels)
+
+# Create a dictionary to store the results
+result_dict = {value: bin_label for value, bin_label in zip(values, assigned_bins)}
+
+container_scores = list(result_dict.values())
+
+yield_totals = [100 - int(yield_df['Average_yield'][yield_df['Country'] == p].iloc[0])/1000 for p in p_list]
+
+yield_scores = [3,5,6,5,2,5,4,6,6,1]
+
+db_scores = [(int(db_df['db_rank'][db_df['country'] == p].iloc[0])/20) for p in p_list]
+
+countries = ['China','India','Russia','USA','France','Canada','Ukraine','Pakistan','Australia','Germany']
+
+data = {
+    'countries': countries,
+    'wheat_scores': wheat_scores,
+    'climate_scores': climate_scores,
+    'yield_scores': yield_scores,
+    'container_scores': container_scores,
+    'db_scores': db_scores
+}
+
+summary_df = pd.DataFrame(data)
+# Add a total column that sums the scores
+summary_df['total'] = summary_df[['wheat_scores','climate_scores','yield_scores','container_scores','db_scores']].sum(axis=1)
+
+from tabulate import tabulate 
+
+table = summary_df
+
+print(tabulate(table, headers=['Country','Prod','Climate', 'Yield', 'Container','Business','Total']))
+
+```
+
+- China leads the ranking, though export must also be taken into account
+- USA and Germany are next most viable options and have the benefit of low climate risk
+
+# Thank you!
+
+Let's have a look at the dashboard...
