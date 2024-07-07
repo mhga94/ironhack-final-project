@@ -41,6 +41,8 @@ from sqlalchemy import text
 # Tables
 from tabulate import tabulate
 
+# Enter password variable!
+
 # Create SQL engine and load top 10 grain producers for last 10 years
 bd = "grain_dash"
 connection_string = 'mysql+pymysql://root:' + password + '@localhost/'+bd

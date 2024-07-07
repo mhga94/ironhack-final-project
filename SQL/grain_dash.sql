@@ -1,14 +1,41 @@
 USE grain_dash;
 
-ALTER TABLE grain_dash.climate DROP CONSTRAINT country_id5;
-ALTER TABLE grain_dash.container DROP CONSTRAINT country_id4;
-ALTER TABLE grain_dash.container_long DROP CONSTRAINT country_id1;
-ALTER TABLE grain_dash.wheat_production DROP CONSTRAINT country_id;
-ALTER TABLE grain_dash.wheat_yield DROP CONSTRAINT country_id2;
-ALTER TABLE grain_dash.wto_status DROP CONSTRAINT country_id3;
-ALTER TABLE grain_dash.doing_business DROP CONSTRAINT country_id6;
+-- Load data from CSVs in data/ using import wizard and matching to appropriate columns.
 
-SELECT * FROM grain_dash.country;
+SELECT DISTINCT country_id FROM grain_dash.country
+ORDER BY country_id DESC;
+
+-- Insert Belgium-Luxembourg
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Belgium-Luxembourg', 264);
+
+-- Insert Taiwan
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Taiwan', 265);
+
+-- Insert Palestine
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Palestine', 266);
+
+-- Insert Serbia & Montengro
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Serbia and Montenegro', 267);
+
+-- Insert USSR
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('USSR', 268);
+
+-- Insert Yugoslav SFR
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Yugoslav SFR', 269);
+
+-- Insert Holy See
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Holy See', 270);
+
+-- Insert Serbia & Montenegro
+INSERT INTO grain_dash.country (country_name, country_id)
+VALUES ('Holy See', 270);
 
 --- CLIMATE
 
@@ -39,7 +66,8 @@ SELECT * FROM grain_dash.climate
 WHERE country_id = 0;
 
 --- CONTAINER
-SELECT * FROM grain_dash.container;
+SELECT * FROM grain_dash.container
+WHERE country_id = 0;
 
 UPDATE grain_dash.container AS con 
 JOIN (
@@ -74,6 +102,10 @@ UPDATE grain_dash.doing_business
 SET country = "Turkiye"
 WHERE business_id = 176;
 
+UPDATE grain_dash.doing_business
+SET country = "Taiwan"
+WHERE business_id = 167;
+
 UPDATE grain_dash.doing_business AS db 
 JOIN (
 SELECT c.country_name, c.country_id 
@@ -85,7 +117,8 @@ ON db.country = temp.country_name
 SET db.country_id = temp.country_id;
 
 --- WHEAT PRODUCTION
-SELECT * FROM grain_dash.wheat_production;
+SELECT * FROM grain_dash.wheat_production
+WHERE country_id = 0;
 
 UPDATE grain_dash.wheat_production AS wp
 JOIN (
@@ -102,7 +135,7 @@ UPDATE grain_dash.wheat_production
 SET country_id = CASE
 	WHEN country = 'Bolivia (Plurinational State of)' THEN "30"
 	WHEN country = 'China, mainland' THEN "42"
-	WHEN country = 'China, Taiwan Province of' THEN "0"
+	WHEN country = 'China, Taiwan Province of' THEN "265"
 	WHEN country = 'Czechoslovakia' THEN "56"
 	WHEN country = 'Democratic People\'s Republic of Korea' THEN "193"
 	WHEN country = 'Democratic Republic of the Congo' THEN "45"
@@ -111,10 +144,10 @@ SET country_id = CASE
 	WHEN country = 'Iran (Islamic Republic of)' THEN "114"
 	WHEN country = 'Kyrgyzstan' THEN "124"
 	WHEN country = 'Netherlands (Kingdom of the)' THEN "176"
-	WHEN country = 'Palestine' THEN "0"
+	WHEN country = 'Palestine' THEN "266"
 	WHEN country = 'Republic of Korea' THEN "128"
 	WHEN country = 'Republic of Moldova' THEN "151"
-	WHEN country = 'Serbia and Montenegro' THEN "0"
+	WHEN country = 'Serbia and Montenegro' THEN "267"
     WHEN country = 'Slovakia' THEN "221"
 	WHEN country = 'Sudan (former)' THEN "206"
 	WHEN country = 'TÃ¼rkiye' THEN "242"
@@ -163,7 +196,7 @@ LIMIT 10;
 
 
 --- WHEAT YIELD
-SELECT DISTINCT country FROM grain_dash.wheat_yield
+SELECT * FROM grain_dash.wheat_yield
 WHERE country_id = 0;
 
 UPDATE grain_dash.wheat_yield AS wy
@@ -181,7 +214,7 @@ UPDATE grain_dash.wheat_yield
 SET country_id = CASE
 	WHEN country = 'Bolivia (Plurinational State of)' THEN "30"
 	WHEN country = 'China, mainland' THEN "42"
-	WHEN country = 'China, Taiwan Province of' THEN "0"
+	WHEN country = 'China, Taiwan Province of' THEN "265"
 	WHEN country = 'Czechoslovakia' THEN "56"
 	WHEN country = 'Democratic People\'s Republic of Korea' THEN "193"
 	WHEN country = 'Democratic Republic of the Congo' THEN "45"
@@ -190,10 +223,10 @@ SET country_id = CASE
 	WHEN country = 'Iran (Islamic Republic of)' THEN "114"
 	WHEN country = 'Kyrgyzstan' THEN "124"
 	WHEN country = 'Netherlands (Kingdom of the)' THEN "176"
-	WHEN country = 'Palestine' THEN "0"
+	WHEN country = 'Palestine' THEN "266"
 	WHEN country = 'Republic of Korea' THEN "128"
 	WHEN country = 'Republic of Moldova' THEN "151"
-	WHEN country = 'Serbia and Montenegro' THEN "0"
+	WHEN country = 'Serbia and Montenegro' THEN "267"
     WHEN country = 'Slovakia' THEN "221"
 	WHEN country = 'Sudan (former)' THEN "206"
 	WHEN country = 'TÃ¼rkiye' THEN "242"
@@ -233,7 +266,9 @@ SET country = CASE
 END;
 
 --- WTO STATUS
-SELECT * FROM grain_dash.wto_status;
+SELECT * FROM grain_dash.wto_status
+WHERE country_id NOT IN (
+SELECT country_id FROM grain_dash.country);
 
 UPDATE grain_dash.wto_status
 SET country = "Sao Tome and Principe"
@@ -262,6 +297,10 @@ WHERE WTO_id = 38;
 UPDATE grain_dash.wto_status
 SET country = "Brunei Darussalam"
 WHERE WTO_id = 18;
+
+UPDATE grain_dash.wto_status
+SET country_id = 270
+WHERE WTO_id = 176;
 
 UPDATE grain_dash.wto_status AS wto
 JOIN (
@@ -329,3 +368,53 @@ ON c.country_name = we_inner.country
 ON we.country = temp.country_name 
 SET we.country_id = temp.country_id;
 
+
+-- Add foreign keys
+ALTER TABLE `grain_dash`.`climate` 
+ADD CONSTRAINT `climate_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+  
+ALTER TABLE `grain_dash`.`container` 
+ADD CONSTRAINT `container_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `grain_dash`.`doing_business` 
+ADD CONSTRAINT `db_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `grain_dash`.`wheat_export` 
+ADD CONSTRAINT `we_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `grain_dash`.`wheat_production` 
+ADD CONSTRAINT `wp_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `grain_dash`.`wheat_yield` 
+ADD CONSTRAINT `wy_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE `grain_dash`.`wto_status` 
+ADD CONSTRAINT `wto_fk`
+  FOREIGN KEY (`country_id`)
+  REFERENCES `grain_dash`.`country` (`country_id`)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
